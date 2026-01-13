@@ -37,10 +37,11 @@ def shopSmart(orderList, fruitShops):
     # for loop to iterate through the fruitShops
     for shop in fruitShops:
         origCost = shop.getPriceOfOrder(orderList)
-        # Check to see if starting 
+        # Makes the 1st shop as the current best cost for right now
         if shopCounter == 0:
             bestShop = shop
             bestCost = origCost
+        # Another check to see if the current shop has the best cost than the previous best cost value
         elif origCost < bestCost:
             bestCost = origCost
             bestShop = shop
