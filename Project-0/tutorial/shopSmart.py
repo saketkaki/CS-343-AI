@@ -32,10 +32,12 @@ def shopSmart(orderList, fruitShops):
     "*** YOUR CODE HERE ***"
     bestShop = ""
     bestCost = 0
-    shopCounter = 0
+    shopCounter = 0 # Starts the counter from the 1st shop
 
+    # for loop to iterate through the fruitShops
     for shop in fruitShops:
         origCost = shop.getPriceOfOrder(orderList)
+        # Check to see if starting 
         if shopCounter == 0:
             bestShop = shop
             bestCost = origCost
