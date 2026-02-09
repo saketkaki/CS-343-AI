@@ -297,7 +297,6 @@ class CornersProblem(search.SearchProblem):
         """
         "*** YOUR CODE HERE ***"
         return (self.startingPosition, self.visitedCorners)
-        util.raiseNotDefined()
 
     def isGoalState(self, state):
         """
@@ -307,8 +306,7 @@ class CornersProblem(search.SearchProblem):
         for corner in state[1]:
             if corner == 0:
                 return False
-        return True  # all are visited
-        util.raiseNotDefined()
+        return True
 
     def getSuccessors(self, state):
         """
@@ -335,13 +333,13 @@ class CornersProblem(search.SearchProblem):
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
             hitsWall = self.walls[nextx][nexty]
-            visitedCorners = state[1][:]
             if not hitsWall:
-                if (nextx,nexty) in self.corners:
-                    visitedCorners[self.corners.index((nextx,nexty))] = 1
-                nextPos = ((nextx, nexty), visitedCorners)
-                successors.append((nextPos, action, 1))
-
+                visitedCorners = state[1][:]  # make a copy to avoid modifying the original
+                if (nextx, nexty) in self.corners:
+                    visitedCorners[self.corners.index((nextx, nexty))] = 1
+                
+                # Record this successor
+                successors.append((((nextx, nexty), visitedCorners), action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -525,6 +523,7 @@ class ClosestDotSearchAgent(SearchAgent):
         problem = AnyFoodSearchProblem(gameState)
 
         "*** YOUR CODE HERE ***"
+        return search.bfs(problem)
         util.raiseNotDefined()
 
 class AnyFoodSearchProblem(PositionSearchProblem):
@@ -561,7 +560,9 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         x,y = state
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        if state in self.food.asList():
+            return True
+        return False
 
 def mazeDistance(point1, point2, gameState):
     """
