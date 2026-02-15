@@ -155,6 +155,51 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
+        numberOfAgents = gameState.getNumAgents()
+        maxDepth = self.depth * numberOfAgents
+
+        def terminalCondtion(state, depth):
+            return state.isWin() or state.isLose() or depth == 0
+        
+        def nextAgent(indexOfAgent):
+            # Note: iterates through the number of agents and if the current agent is the last one, resets back to 0 which is pacman
+            if indexOfAgent + 1 < numberOfAgents:
+                return indexOfAgent + 1
+            else:
+                return 0
+        
+        def minimax(state, indexOfAgent, depth):
+            if terminalCondtion(state, depth):
+                return self.evaluationFunction(state), None  # returns a tuple of score and action
+            
+            legalActions = state.getLegalActions(indexOfAgent)
+            next_agent = nextAgent(indexOfAgent)
+            next_depth = depth - 1
+
+            if indexOfAgent == 0:
+                # This assumes that pacman is maximizing
+                highestValue = float('-inf')
+            else:
+                # This assumes that ghosts are minimizing
+                highestValue = float('inf')
+
+            bestAction = None
+
+            for action in legalActions:
+                score, _ = minimax(state.generateSuccessor(indexOfAgent, action), next_agent, next_depth)
+                if indexOfAgent == 0:
+                    if score > highestValue:
+                        highestValue = score
+                        bestAction = action
+                else:
+                    if score < highestValue:
+                        highestValue = score
+                        bestAction = action
+
+            return highestValue, bestAction
+                
+        selectedValue, selectedAction = minimax(gameState, 0, maxDepth)
+        return selectedAction
         util.raiseNotDefined()
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -167,6 +212,70 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
+        numberOfAgents = gameState.getNumAgents()
+        maxDepth = self.depth
+
+        def terminalCondtion(state, depth, agentIndex):
+            if state.isWin() or state.isLose():
+                return True 
+            if depth == 0 and agentIndex == 0:
+                return True
+            return False
+        
+        def nextAgent(indexOfAgent):
+            # Note: iterates through the number of agents and if the current agent is the last one, resets back to 0 which is pacman
+            if indexOfAgent + 1 < numberOfAgents:
+                return indexOfAgent + 1
+            else:
+                return 0
+        
+        def AlphaBeta(state, indexOfAgent, depth, alpha, beta):
+            if terminalCondtion(state, depth, indexOfAgent):
+                return self.evaluationFunction(state), None  # returns a tuple of score and action
+            
+            legalActions = state.getLegalActions(indexOfAgent)
+            next_agent = nextAgent(indexOfAgent)
+            
+            if indexOfAgent == 0:
+                next_depth = depth - 1  # Only decrease depth after Pacman moves
+            else:
+                next_depth = depth
+
+            bestAction = None
+
+            if indexOfAgent == 0:  # Pacman maximizes
+                highestValue = float('-inf')
+                for action in legalActions:
+                    score, _ = AlphaBeta(state.generateSuccessor(indexOfAgent, action),
+                                         next_agent, next_depth, alpha, beta)
+                    if score > highestValue:
+                        highestValue = score
+                        bestAction = action
+                    
+                    # Prune remaining branches using updated alpha and beta
+                    # Has to be strict inequality so we don't prune when values are equal
+                    if highestValue > beta:
+                        break
+                    alpha = max(alpha, highestValue)
+            else:  # Ghosts minimize
+                highestValue = float('inf')
+                for action in legalActions:
+                    score, _ = AlphaBeta(state.generateSuccessor(indexOfAgent, action),
+                                         next_agent, next_depth, alpha, beta)
+                    if score < highestValue:
+                        highestValue = score
+                        bestAction = action
+                    
+                    # Prune remaining branches using updated alpha and beta
+                    # Has to be strict inequality so we don't prune when values are equal
+                    if highestValue < alpha:
+                        break
+                    beta = min(beta, highestValue)
+            
+            return highestValue, bestAction
+                
+        selectedValue, selectedAction = AlphaBeta(gameState, 0, maxDepth, float('-inf'), float('inf'))
+        return selectedAction
         util.raiseNotDefined()
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
