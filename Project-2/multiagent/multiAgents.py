@@ -291,6 +291,52 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
+        numberOfAgents = gameState.getNumAgents()
+        maxDepth = self.depth * numberOfAgents
+
+        def terminalCondtion(state, depth):
+            return state.isWin() or state.isLose() or depth == 0
+        
+        def nextAgent(indexOfAgent):
+            # Note: iterates through the number of agents and if the current agent is the last one, resets back to 0 which is pacman
+            if indexOfAgent + 1 < numberOfAgents:
+                return indexOfAgent + 1
+            else:
+                return 0
+        
+        def expectimax(state, indexOfAgent, depth):
+            if terminalCondtion(state, depth):
+                return self.evaluationFunction(state), None  # returns a tuple of score and action
+            
+            legalActions = state.getLegalActions(indexOfAgent)
+            next_agent = nextAgent(indexOfAgent)
+            next_depth = depth - 1
+
+            if indexOfAgent == 0:
+                # This assumes that pacman is maximizing
+                highestValue = float('-inf')
+            else:
+                # This assumes that ghosts are expected value nodes
+                highestValue = 0
+                # Since ghosts act uniformly at random, each legal action has equal probability
+                probability = 1.0 / len(legalActions) 
+
+            bestAction = None
+
+            for action in legalActions:
+                score, _ = expectimax(state.generateSuccessor(indexOfAgent, action), next_agent, next_depth)
+                if indexOfAgent == 0:
+                    if score > highestValue:
+                        highestValue = score
+                        bestAction = action
+                else:
+                    # Instead of taking the minimum (as in Minimax), we compute the expected value
+                    highestValue += probability * score
+
+            return highestValue, bestAction
+                
+        selectedValue, selectedAction = expectimax(gameState, 0, maxDepth)
+        return selectedAction
         util.raiseNotDefined()
 
 def betterEvaluationFunction(currentGameState: GameState):
@@ -298,9 +344,57 @@ def betterEvaluationFunction(currentGameState: GameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    DESCRIPTION:  This function evaluates various states by adding the current game score to distances food, ghosts, and capsules.
+                  The closer the food and capsules are, the higher the score.
+                  The closer the ghost is, the lower the score (unless the ghost is scared, in which case it increases the score).
     """
     "*** YOUR CODE HERE ***"
+    newPos = currentGameState.getPacmanPosition()
+    newFood = currentGameState.getFood()
+    newGhostStates = currentGameState.getGhostStates()
+    newFoodList = newFood.asList()
+    capsules = currentGameState.getCapsules()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+    currentScore = currentGameState.getScore()
+
+    smallestDistToFood = float('inf')
+    for foods in newFoodList:
+        distToFood = manhattanDistance(newPos, foods)
+        if distToFood < smallestDistToFood:
+            smallestDistToFood = distToFood
+
+    foodscore = 1.0 / smallestDistToFood
+
+    smallestDistToGhost = float('inf')
+    for ghosts in newGhostStates:
+        distToGhost = manhattanDistance(newPos, ghosts.getPosition())
+        if distToGhost < smallestDistToGhost:
+            smallestDistToGhost = distToGhost
+            smallestGhostIndex = newGhostStates.index(ghosts)
+
+    ghostScore = 0
+
+    # If the closest ghost is scared then pacman should chase it (rewarding it)
+    if newScaredTimes[smallestGhostIndex] > 0:
+        ghostScore += 1 / smallestDistToGhost
+    else:
+        # If ghost is not scared then pacman should run away from it (penalizing it)
+        if smallestDistToGhost <= 1:
+            return -float('inf')
+        ghostScore -= 1 / smallestDistToGhost
+
+    # If capsule is close then pacman should go to it (rewarding it)    
+    capsuleScore = 0
+    closestCapsuleDist = float('inf')
+    for cap in capsules:
+        dist = manhattanDistance(newPos, cap)
+        if dist < closestCapsuleDist:
+            closestCapsuleDist = dist
+
+    capsuleScore = 1.0 / closestCapsuleDist
+
+    # Weighted sum to prioritize food, ghosts, and capsules
+    return currentScore + 10*foodscore + 150*ghostScore + 20*capsuleScore
     util.raiseNotDefined()
 
 # Abbreviation
