@@ -386,8 +386,8 @@ def betterEvaluationFunction(currentGameState: GameState):
     # If capsule is close then pacman should go to it (rewarding it)    
     capsuleScore = 0
     closestCapsuleDist = float('inf')
-    for cap in capsules:
-        dist = manhattanDistance(newPos, cap)
+    for capsule in capsules:
+        dist = manhattanDistance(newPos, capsule)
         if dist < closestCapsuleDist:
             closestCapsuleDist = dist
 
