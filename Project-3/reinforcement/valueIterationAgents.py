@@ -112,13 +112,9 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        legalActions = self.getLegalActions(state)
-        if not legalActions:
-            return None
-
         max_val = float('-inf')
         best_action = None
-        for actions in legalActions:
+        for actions in self.mdp.getPossibleActions(state):
              qval = self.getQValue(state, actions)
              if qval > max_val:
                   max_val = qval
