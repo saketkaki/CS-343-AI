@@ -97,8 +97,29 @@ def constructBayesNet(gameState):
     variableDomainsDict = {}
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # build observation variables
+    for hPos in gameState.getPossibleHouses():
+        walls = gameState.getHouseWalls(hPos)
+        for w in walls:
+            var = OBS_VAR_TEMPLATE % w
+            obsVars.append(var)
+            variableDomainsDict[var] = OBS_VALS
 
+            edges.append((FOOD_HOUSE_VAR, var))
+            edges.append((GHOST_HOUSE_VAR, var))
+
+    # connect position vars to house vars
+    for h in HOUSE_VARS:
+        edges.append((X_POS_VAR, h))
+        edges.append((Y_POS_VAR, h))
+
+    # assign domains
+    variableDomainsDict[X_POS_VAR] = X_POS_VALS
+    variableDomainsDict[Y_POS_VAR] = Y_POS_VALS
+    variableDomainsDict[FOOD_HOUSE_VAR] = HOUSE_VALS
+    variableDomainsDict[GHOST_HOUSE_VAR] = HOUSE_VALS
+
+    # create network
     variables = [X_POS_VAR, Y_POS_VAR] + HOUSE_VARS + obsVars
     net = bn.constructEmptyBayesNet(variables, edges, variableDomainsDict)
     return net, obsVars
@@ -128,7 +149,11 @@ def fillYCPT(bayesNet, gameState):
 
     yFactor = bn.Factor([Y_POS_VAR], [], bayesNet.variableDomainsDict())
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    yFactor.setProbability({Y_POS_VAR: BOTH_TOP_VAL},PROB_BOTH_TOP)
+    yFactor.setProbability({Y_POS_VAR: BOTH_BOTTOM_VAL},PROB_BOTH_BOTTOM)
+    yFactor.setProbability({Y_POS_VAR: LEFT_TOP_VAL},PROB_ONLY_LEFT_TOP)
+    yFactor.setProbability({Y_POS_VAR: LEFT_BOTTOM_VAL},PROB_ONLY_LEFT_BOTTOM)
+    
     bayesNet.setCPT(Y_POS_VAR, yFactor)
 
 def fillHouseCPT(bayesNet, gameState):
