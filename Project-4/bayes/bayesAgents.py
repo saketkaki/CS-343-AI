@@ -218,7 +218,65 @@ def fillObsCPT(bayesNet, gameState):
     bottomLeftPos, topLeftPos, bottomRightPos, topRightPos = gameState.getPossibleHouses()
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    housePositions = {
+        BOTTOM_LEFT_VAL: bottomLeftPos,
+        TOP_LEFT_VAL: topLeftPos,
+        BOTTOM_RIGHT_VAL: bottomRightPos,
+        TOP_RIGHT_VAL: topRightPos
+    }
+
+    # Loop over all observation variables
+    for housePos in gameState.getPossibleHouses():
+        for obsPos in gameState.getHouseWalls(housePos):
+
+            obsVar = OBS_VAR_TEMPLATE % obsPos
+
+            factor = bn.Factor(
+                [obsVar],
+                [FOOD_HOUSE_VAR, GHOST_HOUSE_VAR],
+                bayesNet.variableDomainsDict()
+            )
+
+            for assignment in factor.getAllPossibleAssignmentDicts():
+
+                foodHouse = assignment[FOOD_HOUSE_VAR]
+                ghostHouse = assignment[GHOST_HOUSE_VAR]
+
+                foodPos = housePositions[foodHouse]
+                ghostPos = housePositions[ghostHouse]
+
+                # Check if obsPos belongs to food/ghost house walls
+                isFood = obsPos in gameState.getHouseWalls(foodPos)
+                isGhost = obsPos in gameState.getHouseWalls(ghostPos)
+
+                obsVal = assignment[obsVar]
+
+                # Case 1: observation NOT in any house
+                if not isFood and not isGhost:
+                    if obsVal == NO_OBS_VAL:
+                        prob = 1.0
+                    else:
+                        prob = 0.0
+
+                else:
+                    # Handle overlap case (use FOOD distribution)
+                    if isFood:
+                        probRed = PROB_FOOD_RED
+                    elif isGhost:
+                        probRed = PROB_GHOST_RED
+
+                    # Assign probabilities
+                    if obsVal == RED_OBS_VAL:
+                        prob = probRed
+                    elif obsVal == BLUE_OBS_VAL:
+                        prob = 1 - probRed
+                    else:  # NO_OBS_VAL
+                        prob = 0.0
+
+                factor.setProbability(assignment, prob)
+
+            bayesNet.setCPT(obsVar, factor)
+    # util.raiseNotDefined()
 
 def getMostLikelyFoodHousePosition(evidence, bayesNet, eliminationOrder):
     """
