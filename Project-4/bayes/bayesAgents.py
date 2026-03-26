@@ -12,6 +12,8 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from sympy import factor
+
 import bayesNet as bn
 import game
 from game import Actions, Agent, Directions
@@ -291,7 +293,18 @@ def getMostLikelyFoodHousePosition(evidence, bayesNet, eliminationOrder):
     (This should be a very short method.)
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    jointFactor = inference.inferenceByVariableElimination(bayesNet, [FOOD_HOUSE_VAR], evidence, eliminationOrder)
+    bestProb = 0
+    bestAssignment = None
+
+    for assignment in jointFactor.getAllPossibleAssignmentDicts():
+        temp_prob = jointFactor.getProbability(assignment)
+        if temp_prob > bestProb:
+            bestProb = temp_prob
+            bestAssignment = assignment
+    return bestAssignment
+
+    # util.raiseNotDefined()
 
 
 class BayesAgent(game.Agent):
@@ -393,8 +406,23 @@ class VPIAgent(BayesAgent):
         rightExpectedValue = 0
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        jointFactor = inference.inferenceByVariableElimination(self.bayesNet, [FOOD_HOUSE_VAR], evidence, eliminationOrder)
 
+        for assignment in jointFactor.getAllPossibleAssignmentDicts():
+            prob = jointFactor.getProbability(assignment)
+            food = assignment[FOOD_HOUSE_VAR]
+            ghost = assignment[GHOST_HOUSE_VAR]
+
+            if food == TOP_LEFT_VAL:
+                leftExpectedValue += prob * WON_GAME_REWARD
+            else:
+                leftExpectedValue += prob * GHOST_COLLISION_REWARD
+            
+            if food == TOP_RIGHT_VAL:
+                rightExpectedValue += prob * WON_GAME_REWARD
+            else:
+                rightExpectedValue += prob * GHOST_COLLISION_REWARD
+            
         return leftExpectedValue, rightExpectedValue
 
     def getExplorationProbsAndOutcomes(self, evidence):
@@ -455,11 +483,15 @@ class VPIAgent(BayesAgent):
         You can use your implementation of getExplorationProbsAndOutcomes to
         determine the expected value of acting with this extra evidence.
         """
-
         expectedValue = 0
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        for prob, explorationEvidence in self.getExplorationProbsAndOutcomes(evidence):
+            combinedEvidence = dict(evidence)
+            combinedEvidence.update(explorationEvidence)
+            leftVal, rightVal = self.computeEnterValues(combinedEvidence, enterEliminationOrder)
+            expectedValue += prob * max(leftVal, rightVal)
+        # util.raiseNotDefined()
 
         return expectedValue
 

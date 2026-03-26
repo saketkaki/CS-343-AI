@@ -240,5 +240,31 @@ def normalize(factor):
                             str(factor))
 
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # 1. Get total probability
+    totalProb = 0.0
+    for assignment in factor.getAllPossibleAssignmentDicts():
+        totalProb += factor.getProbability(assignment)
+    if totalProb == 0:
+        return None
+    
+    # 2. Split variables into conditioned and unconditioned
+    new_cond = set(factor.conditionedVariables())
+    new_uncond = set(factor.unconditionedVariables())
+    for var in factor.unconditionedVariables():
+        if len(variableDomainsDict[var]) == 1:
+            new_cond.add(var)
+            new_uncond.remove(var)      # by removing var from new_uncond, we ensure that it is not in both sets (no overlap)
+        else:
+            new_uncond.add(var)
+    
+    # 3. Create new factor
+    newFactor = Factor(new_uncond, new_cond, variableDomainsDict)
+
+    # 4. Normalize probabilities
+    for assignment in newFactor.getAllPossibleAssignmentDicts():
+        prob = factor.getProbability(assignment) / totalProb
+        newFactor.setProbability(assignment, prob)
+    
+    return newFactor
+    # util.raiseNotDefined()
 

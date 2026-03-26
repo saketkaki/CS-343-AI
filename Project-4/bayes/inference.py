@@ -124,13 +124,30 @@ def inferenceByVariableEliminationWithCallTracking(callTrackingList=None):
 
         # this is for autograding -- don't modify
         joinFactorsByVariable = joinFactorsByVariableWithCallTracking(callTrackingList)
-        eliminate             = eliminateWithCallTracking(callTrackingList)
+        eliminate = eliminateWithCallTracking(callTrackingList)
         if eliminationOrder is None: # set an arbitrary elimination order if None given
             eliminationVariables = bayesNet.variablesSet() - set(queryVariables) -\
                                    set(evidenceDict.keys())
             eliminationOrder = sorted(list(eliminationVariables))
 
         "*** YOUR CODE HERE ***"
+        # same setup as enumeration
+        currentFactorsList = bayesNet.getAllCPTsWithEvidence(evidenceDict)
+
+        for elimVar in eliminationOrder:
+            currentFactorsList, joinedFactor = joinFactorsByVariable(currentFactorsList, elimVar)
+
+            if joinedFactor is None:
+                continue
+            if len(joinedFactor.unconditionedVariables()) == 1 and elimVar in joinedFactor.unconditionedVariables():
+                pass
+            else:
+                newFactor = eliminate(joinedFactor, elimVar)
+                currentFactorsList.append(newFactor)
+            
+        fullJoint = joinFactors(currentFactorsList)
+        queryConditionedOnEvidence = normalize(fullJoint)
+        return queryConditionedOnEvidence
         util.raiseNotDefined()
 
 
