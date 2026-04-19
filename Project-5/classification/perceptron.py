@@ -55,7 +55,12 @@ class PerceptronClassifier:
             print("Starting iteration ", iteration, "...")
             for i in range(len(trainingData)):
                 "*** YOUR CODE HERE ***"
-                util.raiseNotDefined()
+                feature_list = trainingData[i]
+                y = trainingLabels[i]
+                y_prime = self.classify([feature_list])[0]
+                if y_prime != y:
+                    self.weights[y] += feature_list
+                    self.weights[y_prime] -= feature_list
 
     def classify(self, data ):
         """
@@ -80,6 +85,16 @@ class PerceptronClassifier:
         featuresWeights = []
 
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        weight_labels = self.weights[label]
+        copied_weights = weight_labels.copy()
+
+        for _ in range(100):
+            if not copied_weights:
+                break
+            max_feature = copied_weights.argMax()
+            featuresWeights.append(max_feature)
+
+            # we are removing it from dict so we can find next largest feature in next iteration
+            del copied_weights[max_feature]
 
         return featuresWeights
