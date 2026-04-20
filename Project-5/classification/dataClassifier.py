@@ -75,14 +75,18 @@ def enhancedFeatureExtractorDigit(datum):
 
     ##
     """
-    features =  basicFeatureExtractorDigit(datum)
+    features = basicFeatureExtractorDigit(datum)
 
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    def is_vertical_transition(x, y):
+        curr = datum.getPixel(x, y)
+        above = datum.getPixel(x, y-1)
+        return int(curr > above)
+
+    for y in range(DIGIT_DATUM_HEIGHT):
+        for x in range(DIGIT_DATUM_WIDTH):
+            features[(x, y, 'vert_edge')] = is_vertical_transition(x, y)
 
     return features
-
-
 
 def basicFeatureExtractorPacman(state):
     """
