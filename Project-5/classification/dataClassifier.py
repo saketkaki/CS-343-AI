@@ -23,6 +23,7 @@ import mira
 import samples
 import sys
 import util
+import math
 from pacman import GameState
 
 TEST_SET_SIZE = 100
@@ -77,14 +78,30 @@ def enhancedFeatureExtractorDigit(datum):
     """
     features = basicFeatureExtractorDigit(datum)
 
-    def is_vertical_transition(x, y):
-        curr = datum.getPixel(x, y)
-        above = datum.getPixel(x, y-1)
-        return int(curr > above)
+    # Basically checks to see if the current pixel is greater than pixel above
+    # If it is, then we are on a vertical edge of the digit
+    def vert_check_pixel(x,y):
+        pixel = datum.getPixel(x,y)
+        above_pixel = datum.getPixel(x,y-1)
+        return int(pixel > above_pixel)
 
     for y in range(DIGIT_DATUM_HEIGHT):
         for x in range(DIGIT_DATUM_WIDTH):
-            features[(x, y, 'vert_edge')] = is_vertical_transition(x, y)
+            features[(x, y, 'vert_edge')] = vert_check_pixel(x,y)
+    
+    # Basically this feature checks to see how many times does the digit intersect certain horizontal lines
+    heights = {"top_quarter_line": DIGIT_DATUM_HEIGHT // 4, "half_line": DIGIT_DATUM_HEIGHT // 2}
+    for height_name, height in heights.items():
+        count = 0
+        crosses_line = False
+        for x in range(DIGIT_DATUM_WIDTH):
+            pixel = datum.getPixel(x, height)
+            if pixel > 0:
+                count += 1
+                if not crosses_line:
+                    features[height_name + '_crosses_line'] = 1
+                    crosses_line = True
+        features[height_name + '_crosses'] = count
 
     return features
 
@@ -128,7 +145,52 @@ def enhancedPacmanFeatures(state, action):
     """
     features = util.Counter()
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    successor = state.generateSuccessor(0, action)
+
+    newPos = successor.getPacmanPosition()
+    newFood = successor.getFood()
+    newGhostStates = successor.getGhostStates()
+    capsules = successor.getCapsules()
+
+    newFoodList = newFood.asList()
+    smallestDistToFood = float('inf')
+    for foods in newFoodList:
+        distToFood = util.manhattanDistance(newPos, foods)
+        if distToFood < smallestDistToFood:
+            smallestDistToFood = distToFood
+    
+    smallestDistToGhost = float('inf')
+    for ghosts in newGhostStates:
+        distToGhost = util.manhattanDistance(newPos, ghosts.getPosition())
+        if distToGhost < smallestDistToGhost:
+            smallestDistToGhost = distToGhost
+    
+    smallestDistToCapsule = float('inf')
+    for cap in capsules:
+        distToCapsule = util.manhattanDistance(newPos, cap)
+        if distToCapsule < smallestDistToCapsule:
+            smallestDistToCapsule = distToCapsule
+
+    if smallestDistToFood != float('inf'):
+        features["food_close"] = 1.0 / (smallestDistToFood + 1)
+    else:
+        features["food_close"] = 0
+    
+    if smallestDistToGhost != float('inf'):
+        features["ghost_dist"] = 1.0 / (smallestDistToGhost + 1)
+    else:
+        features["ghost_dist"] = 0
+
+    if smallestDistToCapsule != float('inf'):
+        features["capsule_close"] = 1.0 / (smallestDistToCapsule + 1)
+    else:
+        features["capsule_close"] = 0
+    
+    if smallestDistToFood != float('inf') and smallestDistToGhost != float('inf'):
+        features["risk_reward"] = features["food_close"] - features["ghost_dist"]
+
+    features["successor_score"] = successor.getScore()
+
     return features
 
 
