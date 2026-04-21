@@ -172,22 +172,22 @@ def enhancedPacmanFeatures(state, action):
             smallestDistToCapsule = distToCapsule
 
     if smallestDistToFood != float('inf'):
-        features["food_close"] = 1.0 / (smallestDistToFood + 1)
+        features["closestFood"] = 1.0 / (smallestDistToFood + 1)
     else:
-        features["food_close"] = 0
+        features["closestFood"] = 0
     
     if smallestDistToGhost != float('inf'):
-        features["ghost_dist"] = 1.0 / (smallestDistToGhost + 1)
+        features["ghostDist"] = 1.0 / (smallestDistToGhost + 1)
     else:
-        features["ghost_dist"] = 0
+        features["ghostDist"] = 0
 
     if smallestDistToCapsule != float('inf'):
-        features["capsule_close"] = 1.0 / (smallestDistToCapsule + 1)
+        features["closestCapsule"] = 1.0 / (smallestDistToCapsule + 1)
     else:
-        features["capsule_close"] = 0
+        features["closestCapsule"] = 0
     
     if smallestDistToFood != float('inf') and smallestDistToGhost != float('inf'):
-        features["risk_reward"] = features["food_close"] - features["ghost_dist"]
+        features["rewardOfRisk"] = features["closestFood"] - features["ghostDist"]
 
     features["successor_score"] = successor.getScore()
 
